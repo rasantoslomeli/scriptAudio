@@ -1,0 +1,204 @@
+{
+  "title": "Fictional production roundtable",
+  "audio_path": "sample-cues.wav",
+  "duration": 60,
+  "file_size": 1920044,
+  "media": {
+    "codec_name": "pcm_s16le",
+    "sample_rate": "16000",
+    "channels": 1,
+    "notice": "Synthetic tone cues, NOT speech. Transcript is fictional, not ASR output."
+  },
+  "id": "project_e5f31fbeea204abc83efd18251a31722",
+  "speakers": {
+    "a": {
+      "id": "a",
+      "name": "Alex (fictional)",
+      "color": "#56702A",
+      "role": "Host"
+    },
+    "b": {
+      "id": "b",
+      "name": "Jordan (fictional)",
+      "color": "#7365A0",
+      "role": "Guest"
+    },
+    "c": {
+      "id": "c",
+      "name": "Casey (fictional)",
+      "color": "#28787D",
+      "role": "Guest"
+    }
+  },
+  "segments": [
+    {
+      "id": "demo_1",
+      "speaker_id": "a",
+      "start": 0,
+      "end": 7,
+      "text": "Welcome to our fictional production roundtable. How do small teams work remotely?",
+      "original_text": "Welcome to our fictional production roundtable. How do small teams work remotely?",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": false,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    },
+    {
+      "id": "demo_2",
+      "speaker_id": "b",
+      "start": 8,
+      "end": 16,
+      "text": "We share an agenda before recording and keep a separate local audio track for each participant.",
+      "original_text": "We share an agenda before recording and keep a separate local audio track for each participant.",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": false,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    },
+    {
+      "id": "demo_3",
+      "speaker_id": "c",
+      "start": 17,
+      "end": 24,
+      "text": "I agree about local tracks. I disagree that every discussion needs a strict agenda.",
+      "original_text": "I agree about local tracks. I disagree that every discussion needs a strict agenda.",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": false,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    },
+    {
+      "id": "demo_4",
+      "speaker_id": "a",
+      "start": 25,
+      "end": 31,
+      "text": "That is a useful distinction. What happens when two guests interrupt each other?",
+      "original_text": "That is a useful distinction. What happens when two guests interrupt each other?",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": true,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    },
+    {
+      "id": "demo_5",
+      "speaker_id": "b",
+      "start": 30,
+      "end": 39,
+      "text": "Separate tracks help us review cross-talk, but automatic speaker labels still need human checking.",
+      "original_text": "Separate tracks help us review cross-talk, but automatic speaker labels still need human checking.",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": true,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    },
+    {
+      "id": "demo_6",
+      "speaker_id": "c",
+      "start": 40,
+      "end": 48,
+      "text": "Let us test that next week. We should not describe our pilot as a proven improvement yet.",
+      "original_text": "Let us test that next week. We should not describe our pilot as a proven improvement yet.",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": false,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    },
+    {
+      "id": "demo_7",
+      "speaker_id": "a",
+      "start": 49,
+      "end": 57,
+      "text": "Our decision is to run a pilot and compare the results. No guaranteed accuracy claims.",
+      "original_text": "Our decision is to run a pilot and compare the results. No guaranteed accuracy claims.",
+      "words": [],
+      "confidence": 0.95,
+      "speaker_confidence": null,
+      "overlap": false,
+      "reviewed": false,
+      "flags": [
+        "Synthetic demonstration data; no acoustic confidence measured"
+      ],
+      "readable_text": null
+    }
+  ],
+  "summaries": [
+    {
+      "id": "demo_summary",
+      "mode": "Entire podcast",
+      "title": "Source-linked example (hand authored)",
+      "claims": [
+        {
+          "text": "Jordan describes separate local audio tracks as a way to review interruptions.",
+          "segment_ids": [
+            "demo_2",
+            "demo_5"
+          ],
+          "status": "supported",
+          "note": "Speaker assertion; not independently verified"
+        },
+        {
+          "text": "Casey disagrees that every discussion needs a strict agenda.",
+          "segment_ids": [
+            "demo_3"
+          ],
+          "status": "supported",
+          "note": "Speaker assertion; not independently verified"
+        },
+        {
+          "text": "The group plans a pilot; Casey says its benefits are not yet proven.",
+          "segment_ids": [
+            "demo_6",
+            "demo_7"
+          ],
+          "status": "supported",
+          "note": "Speaker assertion; not independently verified"
+        }
+      ],
+      "provider": "Hand-authored synthetic fixture, not AI output",
+      "stale": false
+    }
+  ],
+  "bookmarks": [
+    {
+      "time": 30,
+      "label": "Cross-talk example"
+    },
+    {
+      "time": 49,
+      "label": "Pilot decision"
+    }
+  ],
+  "job": null,
+  "schema_version": 1,
+  "original_segments": []
+}
