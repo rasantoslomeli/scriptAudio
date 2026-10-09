@@ -22,6 +22,7 @@ def main():
     register.add_argument('--output',required=True)
     for name in EdgeConfig.asset_names():
         register.add_argument('--'+name.replace('_','-'),required=name in EdgeConfig.asset_names()[:5])
+    register.add_argument('--summary-shard',action='append',default=[],help='Additional GGUF part in the same directory as --summary-model')
     register.add_argument('--threads',type=int)
     register.add_argument('--cluster-threshold',type=float,default=.4)
     verify=commands.add_parser('verify');verify.add_argument('config');verify.add_argument('--summaries',action='store_true')
@@ -32,6 +33,11 @@ def main():
         values={name:str(Path(getattr(args,name)).resolve()) if getattr(args,name) else '' for name in EdgeConfig.asset_names()}
         config=EdgeConfig(args.profile,**values,threads=args.threads or PROFILES[args.profile]['threads'],cluster_threshold=args.cluster_threshold)
         config.hashes={name:digest(path) for name,path in values.items() if path}
+        for shard in args.summary_shard:
+            file=Path(shard).resolve()
+            if not config.summary_model or file.parent!=Path(config.summary_model).parent:
+                parser.error('GGUF shards must be beside the primary summary model')
+            config.summary_shards[file.name]=digest(file)
         config.verify(summary=bool(config.summary_model))
         # Relative paths make a complete directory tree transferable to an air-gapped host.
         for name,path in values.items():

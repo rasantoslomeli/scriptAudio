@@ -55,7 +55,7 @@ def main():
                 'transcription_real_time_factor':transcription_seconds/project.duration if project.duration else None,
                 'peak_gpu_total_used_MiB':max(samples) if samples else None,
                 'gpu_measurement_note':'nvidia-smi total device usage, including other applications; not isolated allocation',
-                'speaker_ids':list(project.speakers),'segments':len(project.segments),'model_sha256':config.hashes,
+                'speaker_ids':list(project.speakers),'segments':len(project.segments),'model_sha256':config.hashes,'summary_shard_sha256':config.summary_shards,
                 'accuracy_note':'No ground-truth comparison; these timings do not measure transcription/diarization accuracy'}
         write_json(output.with_suffix('.benchmark.json'),report)
         print(json.dumps(report,indent=2))

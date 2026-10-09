@@ -6,6 +6,9 @@ on:
     tags: ['v*']
     paths: ['podcast_studio/**', 'scripts/**', 'tests/**', 'pyproject.toml', 'uv.lock', '.github/workflows/desktop-builds.yml']
   pull_request:
+concurrency:
+  group: offline-desktop-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   package:
     strategy:

@@ -30,7 +30,14 @@ Preparation happens on a connected machine of the target OS/architecture. Transf
 
    RTX compilation targets compute capability 8.6; Metal shaders are embedded. The helper checks for modifications in its own checkouts, uses static engine libraries, and disables host-specific CPU instruction selection. It does not modify the app checkout. Windows generators may put binaries under `build/bin/Release`. Retain adjacent DLLs/dylibs; driver/framework/libc requirements remain platform-specific.
 
-2. Obtain trusted compatible assets and a **native FFmpeg executable with its runtime dependencies**:
+2. Prepare the checksum-pinned recommended models on a connected host:
+
+   ```sh
+   python scripts/prepare_models.py --profile rtx3080 --directory edge-bundle/models
+   # Or --profile apple-silicon / --profile cpu; --transcript-only omits LLM weights.
+   ```
+
+   The source catalog records official Hugging Face LFS SHA256 metadata and pinned official ONNX release bytes. Already verified files are reused; failed downloads never replace a destination. This command is separate from the app and must run before offline deployment. It writes model paths/shard hashes to models.receipt.json. Obtain a **native FFmpeg executable with its runtime dependencies** too. Model sources:
    - [Official whisper.cpp models](https://github.com/ggml-org/whisper.cpp/tree/master/models): `ggml-large-v3-turbo-q5_0.bin`, multilingual rather than `.en`.
    - [sherpa-onnx segmentation release](https://github.com/k2-fsa/sherpa-onnx/releases/tag/speaker-segmentation-models): extract `sherpa-onnx-pyannote-segmentation-3-0.tar.bz2`; retain `model.onnx` and licensing information.
    - [Speaker embedding release](https://github.com/k2-fsa/sherpa-onnx/releases/tag/speaker-recongition-models): `wespeaker_en_voxceleb_resnet34.onnx`. The upstream tag really is spelled `recongition`.
@@ -60,7 +67,7 @@ Preparation happens on a connected machine of the target OS/architecture. Transf
    python scripts/edge_bundle.py verify edge-bundle/edge-config.json --summaries
    ```
 
-   Windows uses `.exe`; macOS uses `--profile apple-silicon`. The manifest uses relative paths and SHA256 values; transfer the entire tree. For transcription-only installations omit summary assets and retain Full Transcript Only. Choose Local source excerpts explicitly for non-AI notes. Do not register binaries from another OS or a CPU binary under a GPU profile.
+   Windows uses `.exe`; macOS uses `--profile apple-silicon`. The official Qwen 7B Q4 model is split into two GGUF files: use its `00001-of-00002.gguf` as `--summary-model` and supply `--summary-shard PATH_TO_00002-of-00002.gguf`. Keep both original filenames together; both are verified before loading. The manifest uses relative paths and SHA256 values; transfer the entire tree. For transcription-only installations omit summary assets and retain Full Transcript Only. Choose Local source excerpts explicitly for non-AI notes. Do not register binaries from another OS or a CPU binary under a GPU profile.
 
 5. In Settings select Offline edge, the manifest, and Offline AI (GGUF), or set the non-secret `PSS_EDGE_CONFIG` path. Full Transcript Only remains the default processing mode and never loads an LLM.
 

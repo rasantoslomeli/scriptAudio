@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -70,6 +71,7 @@ class EdgeConfig:
     max_summary_tokens: int = 1536
     gpu_layers: int = 99
     schema_version: int = 1
+    summary_shards: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def load(cls, path):
@@ -106,6 +108,21 @@ class EdgeConfig:
                 raise ValueError(f"Offline asset checksum mismatch/unregistered: {name}")
             if name.endswith("executable") and not os.access(path, os.X_OK):
                 raise ValueError(f"Engine is not executable: {name}")
+        if summary:
+            split = re.fullmatch(r"(.+)-(\d{5})-of-(\d{5})\.gguf",Path(self.summary_model).name)
+            if split:
+                prefix, part, count = split.group(1), int(split.group(2)), int(split.group(3))
+                if part != 1 or not 1 <= count <= 64:
+                    raise ValueError("Select the first GGUF shard of a supported split model")
+                required = {f"{prefix}-{i:05}-of-{count:05}.gguf" for i in range(2,count+1)}
+                if not required.issubset(self.summary_shards):
+                    raise ValueError("Register every GGUF shard; the primary file alone cannot validate the complete model")
+            for filename, expected in self.summary_shards.items():
+                if Path(filename).name != filename or not filename.endswith('.gguf'):
+                    raise ValueError("Invalid additional GGUF shard filename")
+                shard = Path(self.summary_model).parent / filename
+                if not shard.is_file() or len(expected) != 64 or digest(shard,cancel) != expected.lower():
+                    raise ValueError(f"Additional GGUF shard is missing or has a checksum mismatch: {filename}")
         return self
 
     def save(self, path):

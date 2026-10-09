@@ -152,3 +152,20 @@ def test_gpu_profile_cannot_claim_cpu_execution(tmp_path):
         check_acceleration('rtx3080',log)
     log.write_text('whisper_backend_init_gpu: using Metal backend')
     check_acceleration('apple-silicon',log)
+
+
+def test_split_gguf_requires_every_local_shard(bundle,tmp_path):
+    path,config=bundle
+    first=tmp_path/'model-00001-of-00002.gguf';first.write_bytes(b'first part')
+    config.summary_model=str(first);config.hashes['summary_model']=digest(first);config.save(path)
+    with pytest.raises(ValueError,match='every GGUF shard'):
+        EdgeConfig.load(path).verify(summary=True)
+    shard=tmp_path/'model-00002-of-00002.gguf';shard.write_bytes(b'second part')
+    config.summary_shards={shard.name:digest(shard)};config.save(path)
+    EdgeConfig.load(path).verify(summary=True)
+    shard.write_bytes(b'tampered part')
+    with pytest.raises(ValueError,match='shard'):
+        EdgeConfig.load(path).verify(summary=True)
+    shard.unlink()
+    with pytest.raises(ValueError,match='shard'):
+        EdgeConfig.load(path).verify(summary=True)

@@ -15,7 +15,7 @@ uv run --frozen --extra dev podcast-speaker-studio
 uv run --frozen --extra dev podcast-speaker-studio samples/roundtable.pss.json
 ```
 
-**Installing the app alone does not install speech/LLM model weights.** Prepare a native engine/model bundle, then choose its `edge-config.json` in Settings. See [the complete edge deployment guide](docs/edge.md) for model sources, native CUDA/Metal builds, checksums, offline transfer, memory/storage budgets, packaging, and target-hardware benchmarks.
+**Installing the app alone does not install speech/LLM model weights.** Run `scripts/prepare_models.py` on a connected preparation host, prepare native engines/FFmpeg, then choose its `edge-config.json` in Settings. See [the complete edge deployment guide](docs/edge.md) for model sources, native CUDA/Metal builds, checksums, offline transfer, memory/storage budgets, packaging, and target-hardware benchmarks.
 
 | Target | Recognition | Global diarization | Optional local summary |
 |---|---|---|---|
