@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from threading import Event
 import hashlib
+from bisect import bisect_left, bisect_right
 import json
 import math
 import os
@@ -180,8 +181,27 @@ def speaker_letter(number):
         number -= 1
 
 
+class TurnIndex:
+    """Bound interval queries so long transcripts do not rescan all past turns per word."""
+    def __init__(self,turns):
+        self.turns=sorted(turns,key=lambda t:t["start"])
+        self.starts=[t["start"] for t in self.turns]
+        self.prefix_ends=[]
+        edge=0.0
+        for turn in self.turns:
+            edge=max(edge,turn["end"])
+            self.prefix_ends.append(edge)
+
+    def overlapping(self,start,end):
+        lower=bisect_right(self.prefix_ends,start)
+        upper=bisect_left(self.starts,end)
+        return [turn for turn in self.turns[lower:upper] if turn["end"]>start]
+
+
 def assign_speaker(start, end, turns):
     """Overlap scores are alignment heuristics, not calibrated voice confidence."""
+    if isinstance(turns,TurnIndex):
+        turns=turns.overlapping(start,end)
     scores = {}
     active = []
     for turn in turns:
@@ -240,6 +260,7 @@ def align_transcript(chunks, turns, duration):
     turns = sorted(turns, key=lambda t: t["start"])
     identity_order = list(dict.fromkeys(t["speaker"] for t in turns))
     identities = {speaker: speaker_letter(i) for i,speaker in enumerate(identity_order)}
+    turn_index=TurnIndex(turns)
     utterances = []
     for chunk in chunks:
         offset = chunk["offset"]*1000
@@ -254,7 +275,7 @@ def align_transcript(chunks, turns, duration):
                     raise ProviderError("Whisper returned invalid timestamps")
                 if not core_start <= (start+end)/2 < core_end:
                     continue  # Ownership within overlapped chunks: never transcribe just the first hour.
-                who, overlap, flags = assign_speaker(start/1000,end/1000,turns)
+                who, overlap, flags = assign_speaker(start/1000,end/1000,turn_index)
                 if not words:
                     flags.append("Word alignment unavailable; inspect speaker boundaries")
                 flags.append("Local diarization confidence is uncalibrated; review voice assignment")

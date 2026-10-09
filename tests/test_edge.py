@@ -169,3 +169,12 @@ def test_split_gguf_requires_every_local_shard(bundle,tmp_path):
     shard.unlink()
     with pytest.raises(ValueError,match='shard'):
         EdgeConfig.load(path).verify(summary=True)
+
+
+def test_long_recording_interval_index_skips_expired_turns():
+    from podcast_studio.edge import TurnIndex
+    turns=[{'start':i*2,'end':i*2+1,'speaker':i%3} for i in range(10000)]
+    index=TurnIndex(turns)
+    assert index.overlapping(19998.1,19998.9)==[turns[-1]]
+    assert assign_speaker(19998.1,19998.9,index)[0]==turns[-1]['speaker']
+    assert index.overlapping(19999.1,19999.9)==[]
