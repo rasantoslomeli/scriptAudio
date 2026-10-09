@@ -65,6 +65,28 @@ def test_malformed_citations_fail(project):
         validate_claims(project, [{"text": "bad", "segment_ids": "s1"}])
 
 
+def test_quotation_requires_the_cited_passage(project):
+    claim = validate_claims(project,[{"text":"They said 'Let us\n test remote audio.'", "segment_ids":["s1"]}])[0]
+    assert claim.status == "unsupported"
+    assert "Quoted text" in claim.note
+    correct = validate_claims(project,[{"text":"They said 'Let us\n test remote audio.'", "segment_ids":["s3"]}])[0]
+    assert correct.status == "supported"
+
+
+def test_quote_normalization_and_contractions(project):
+    claims = validate_claims(project,[{"text":"They said “remote   teams collaborate.”", "segment_ids":["s1"]},
+                                    {"text":"It's a team's assertion", "segment_ids":["s1"]}])
+    assert all(c.status == "supported" for c in claims)
+
+
+@pytest.mark.parametrize("reason",["unassigned","overlap"])
+def test_uncertain_source_requires_review_even_when_model_denies_it(project,reason):
+    if reason=="unassigned":project.segments[0].flags.append("Unassigned voice")
+    else:project.segments[0].overlap=True
+    claim=validate_claims(project,[{"text":"Speaker assertion", "segment_ids":["s1"], "ambiguous":False}])[0]
+    assert claim.status == "ambiguous"
+
+
 def test_single_oversized_passage_is_not_truncated(project, monkeypatch):
     project.segments = [project.segments[0]]
     project.segments[0].text = 'long passage ' * 10000

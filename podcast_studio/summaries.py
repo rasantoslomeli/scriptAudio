@@ -1,6 +1,7 @@
 """Grounded claim structure; validation is referential, never proof of truth."""
 from __future__ import annotations
 import json
+import re
 from threading import Event
 from .model import Claim, Project, Summary, uid
 from .providers import ProviderError, Transport
@@ -9,7 +10,8 @@ MODES = ["Entire podcast", "Individual speakers", "Topic / question", "Chronolog
 
 
 def validate_claims(project: Project, claims: list[dict], allowed_ids=None) -> list[Claim]:
-    known = {s.id for s in project.segments}
+    by_id = {s.id: s for s in project.segments}
+    known = set(by_id)
     allowed = known if allowed_ids is None else known.intersection(allowed_ids)
     result = []
     for raw in claims:
@@ -21,11 +23,27 @@ def validate_claims(project: Project, claims: list[dict], allowed_ids=None) -> l
         citations = list(dict.fromkeys(citations))
         valid = bool(citations) and all(i in allowed for i in citations)
         status = "supported" if valid else "unsupported"
-        if raw.get("ambiguous") and valid:
-            status = "ambiguous"
-        result.append(Claim(raw["text"].strip(), citations, status,
-                            "Speaker assertion; semantic support requires human review" if valid else
-                            "Invalid, missing, or out-of-scope segment IDs; do not rely on this claim"))
+        note = "Invalid, missing, or out-of-scope segment IDs; do not rely on this claim"
+        if valid:
+            sources = [by_id[i] for i in citations]
+            # Citation IDs alone cannot establish that a generated quotation is present.
+            # Normalize whitespace/case, preserving words and punctuation; do not use
+            # unrelated passages to rescue a quotation with the wrong references.
+            source_text = " ".join(s.text for s in sorted(sources,key=lambda s:s.start))
+            normalized_source = " ".join(source_text.split()).casefold()
+            quotations = []
+            for pattern in [r'"([^"]+)"',r'“([^”]+)”',r"(?<!\w)'([^']+)'(?!\w)",r'‘([^’]+)’']:
+                quotations.extend(re.findall(pattern,raw["text"]))
+            mismatch = any(" ".join(q.split()).casefold() not in normalized_source for q in quotations)
+            uncertain = any(s.overlap or s.speaker_id=="speaker_unknown" or "Unassigned voice" in s.flags for s in sources)
+            note = "Speaker assertion; semantic support requires human review"
+            if mismatch:
+                status = "unsupported"
+                note = "Quoted text was not found in the cited evidence; inspect or regenerate this claim"
+            elif raw.get("ambiguous") or uncertain:
+                status = "ambiguous"
+                note = "Ambiguous source/voice assignment or model uncertainty; review the cited evidence"
+        result.append(Claim(raw["text"].strip(), citations, status,note))
     return result
 
 

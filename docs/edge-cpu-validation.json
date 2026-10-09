@@ -1,0 +1,295 @@
+{
+  "validated_on": "2026-10-09",
+  "host": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "profile": "cpu",
+    "threads": 4,
+    "GPU": null,
+    "AVX_enabled": false
+  },
+  "fixture": {
+    "source": "Pinned whisper.cpp samples/jfk.wav",
+    "duration_seconds": 11.0,
+    "source_sha256": "59dfb9a4acb36fe2a2affc14bacbee2920ff435cb13cc314a08c13f66ba7860e"
+  },
+  "model_sha256": {
+    "asr_executable": "f9498c439edfb2c5386f02b3d42643d9f7b0f204c25b3b4713cefbaf21534410",
+    "asr_model": "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2",
+    "segmentation_model": "220ad67ca923bef2fa91f2390c786097bf305bceb5e261d4af67b38e938e1079",
+    "embedding_model": "5ef208a9da1453335308a6b6f4e6dfbd7e183a38b604de0a57664f45d257fe94",
+    "ffmpeg_executable": "e8a8d46f5225f3062cec7c07fb145d58ae73c603cb740dcd5bad34bfb54e455a",
+    "summary_executable": "9221237a929fb3b70c99782725cc0ed8ff72f3c2fc7b046e51376285cb78142f",
+    "summary_model": "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d"
+  },
+  "transcription": {
+    "fresh_seconds": 561.7403827860016,
+    "real_time_factor": 51.06730752600015,
+    "segments": 6,
+    "word_records": 22,
+    "cached_resume_seconds": 0.6037430500000482
+  },
+  "learned_summary_inference": {
+    "total_seconds": 1326.823378942001,
+    "modes": [
+      {
+        "mode": "Entire podcast",
+        "seconds": 369.603978739,
+        "claims": 1
+      },
+      {
+        "mode": "Individual speakers",
+        "seconds": 367.53550852100125,
+        "claims": 4
+      },
+      {
+        "mode": "Topic / question",
+        "seconds": 259.09827564399893,
+        "claims": 1
+      },
+      {
+        "mode": "Chronological",
+        "seconds": 323.9550814009999,
+        "claims": 1
+      }
+    ],
+    "server_reaped": true,
+    "proxy_test": "Local requests succeed with unreachable internet proxies; this is not an OS firewall isolation test"
+  },
+  "revalidated_actual_model_outputs": [
+    {
+      "mode": "Entire podcast",
+      "group": "Entire podcast",
+      "claims": [
+        {
+          "text": "And my fellow Americans, ask not what your country can do for you, ask what you can do for your country.",
+          "status": "ambiguous",
+          "note": "Ambiguous source/voice assignment or model uncertainty; review the cited evidence",
+          "evidence": [
+            {
+              "id": "seg_adef1298a2494c5bb3d02973b393beec",
+              "speaker": "Unassigned",
+              "start": 0.1,
+              "end": 0.24,
+              "text": " And"
+            },
+            {
+              "id": "seg_0f788f619fdd4309b923b93e6ca79592",
+              "speaker": "Speaker A",
+              "start": 0.33,
+              "end": 4.28,
+              "text": " so, my fellow Americans, ask not"
+            },
+            {
+              "id": "seg_a386072892ce498099e2f75e1c8dc4b4",
+              "speaker": "Unassigned",
+              "start": 4.98,
+              "end": 5.26,
+              "text": " what"
+            },
+            {
+              "id": "seg_d43c0c0216924d0e8525569c4b1702aa",
+              "speaker": "Speaker A",
+              "start": 5.41,
+              "end": 7.44,
+              "text": " your country can do for"
+            },
+            {
+              "id": "seg_47987919705140b3a3e6d483385a4dc6",
+              "speaker": "Unassigned",
+              "start": 7.44,
+              "end": 8.22,
+              "text": " you,"
+            },
+            {
+              "id": "seg_015a6a1658cf431487b0ee1e7ef5d584",
+              "speaker": "Speaker A",
+              "start": 8.22,
+              "end": 10.4,
+              "text": "ask what you can do for your country."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "Individual speakers",
+      "group": "Unassigned",
+      "claims": [
+        {
+          "text": "And what you?",
+          "status": "ambiguous",
+          "note": "Ambiguous source/voice assignment or model uncertainty; review the cited evidence",
+          "evidence": [
+            {
+              "id": "seg_adef1298a2494c5bb3d02973b393beec",
+              "speaker": "Unassigned",
+              "start": 0.1,
+              "end": 0.24,
+              "text": " And"
+            },
+            {
+              "id": "seg_a386072892ce498099e2f75e1c8dc4b4",
+              "speaker": "Unassigned",
+              "start": 4.98,
+              "end": 5.26,
+              "text": " what"
+            },
+            {
+              "id": "seg_47987919705140b3a3e6d483385a4dc6",
+              "speaker": "Unassigned",
+              "start": 7.44,
+              "end": 8.22,
+              "text": " you,"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "Individual speakers",
+      "group": "Speaker A",
+      "claims": [
+        {
+          "text": "so, my fellow Americans, ask not",
+          "status": "supported",
+          "note": "Speaker assertion; semantic support requires human review",
+          "evidence": [
+            {
+              "id": "seg_0f788f619fdd4309b923b93e6ca79592",
+              "speaker": "Speaker A",
+              "start": 0.33,
+              "end": 4.28,
+              "text": " so, my fellow Americans, ask not"
+            }
+          ]
+        },
+        {
+          "text": "your country can do for",
+          "status": "supported",
+          "note": "Speaker assertion; semantic support requires human review",
+          "evidence": [
+            {
+              "id": "seg_d43c0c0216924d0e8525569c4b1702aa",
+              "speaker": "Speaker A",
+              "start": 5.41,
+              "end": 7.44,
+              "text": " your country can do for"
+            }
+          ]
+        },
+        {
+          "text": "ask what you can do for your country.",
+          "status": "supported",
+          "note": "Speaker assertion; semantic support requires human review",
+          "evidence": [
+            {
+              "id": "seg_015a6a1658cf431487b0ee1e7ef5d584",
+              "speaker": "Speaker A",
+              "start": 8.22,
+              "end": 10.4,
+              "text": "ask what you can do for your country."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "Topic / question",
+      "group": "Topic / question: service to your country",
+      "claims": [
+        {
+          "text": "The speaker emphasizes the importance of asking what one can do for their country, rather than what the country can do for them. This is evident in the text of the second segment, where the speaker says, 'ask what you can do for your country.'",
+          "status": "unsupported",
+          "note": "Quoted text was not found in the cited evidence; inspect or regenerate this claim",
+          "evidence": [
+            {
+              "id": "seg_0f788f619fdd4309b923b93e6ca79592",
+              "speaker": "Speaker A",
+              "start": 0.33,
+              "end": 4.28,
+              "text": " so, my fellow Americans, ask not"
+            },
+            {
+              "id": "seg_d43c0c0216924d0e8525569c4b1702aa",
+              "speaker": "Speaker A",
+              "start": 5.41,
+              "end": 7.44,
+              "text": " your country can do for"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "Chronological",
+      "group": "Chronological",
+      "claims": [
+        {
+          "text": "And my fellow Americans, ask not what your country can do for you, but what you can do for your country.",
+          "status": "ambiguous",
+          "note": "Ambiguous source/voice assignment or model uncertainty; review the cited evidence",
+          "evidence": [
+            {
+              "id": "seg_adef1298a2494c5bb3d02973b393beec",
+              "speaker": "Unassigned",
+              "start": 0.1,
+              "end": 0.24,
+              "text": " And"
+            },
+            {
+              "id": "seg_0f788f619fdd4309b923b93e6ca79592",
+              "speaker": "Speaker A",
+              "start": 0.33,
+              "end": 4.28,
+              "text": " so, my fellow Americans, ask not"
+            },
+            {
+              "id": "seg_a386072892ce498099e2f75e1c8dc4b4",
+              "speaker": "Unassigned",
+              "start": 4.98,
+              "end": 5.26,
+              "text": " what"
+            },
+            {
+              "id": "seg_d43c0c0216924d0e8525569c4b1702aa",
+              "speaker": "Speaker A",
+              "start": 5.41,
+              "end": 7.44,
+              "text": " your country can do for"
+            },
+            {
+              "id": "seg_47987919705140b3a3e6d483385a4dc6",
+              "speaker": "Unassigned",
+              "start": 7.44,
+              "end": 8.22,
+              "text": " you,"
+            },
+            {
+              "id": "seg_015a6a1658cf431487b0ee1e7ef5d584",
+              "speaker": "Speaker A",
+              "start": 8.22,
+              "end": 10.4,
+              "text": "ask what you can do for your country."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "validation_note": "Actual learned outputs were replayed through the revised citation validator after review exposed a quoted-passage/reference mismatch. Generation was not repeated because only deterministic validation changed. Valid IDs are not proof of semantic support. The mismatched topic quotation is unsupported; unknown-source claims are ambiguous. Native CUDA/Metal, the Mac 7B model, physical playback, long-recording accuracy and OS firewall isolation remain untested.",
+  "real_project_exports_bytes": {
+    "TXT": 3921,
+    "Markdown": 3941,
+    "PDF": 25041,
+    "DOCX": 37468,
+    "JSON": 17258,
+    "CSV": 4643,
+    "SRT": 380
+  },
+  "final_packaged_diarization": {
+    "turns": 14,
+    "speaker_ids": 4
+  },
+  "final_packaged_smoke": "passed; no physical audio device available",
+  "automated_tests_passed": 70
+}

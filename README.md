@@ -39,7 +39,7 @@ Recognition and summaries run sequentially so GPU models are not resident togeth
 
 Settings defaults to Offline AI (GGUF). The Summaries & evidence tab supports entire conversation, individual participants, topic/question, and chronological modes. A managed llama.cpp process listens only on authenticated loopback, runs with `--offline`, bypasses HTTP proxies, and shuts down after work/cancellation. The model tokenizer checks context limits; sources are subdivided without dropping text. JSON grammar and citation validation restrict references to actual source segment IDs.
 
-Evidence quotes, speaker labels, and display timestamps always resolve from stored data. Claims remain speaker assertions, not independently verified facts; a valid reference cannot prove semantic support. Review important claims against every passage. Corrections mark summaries stale; split segments receive new IDs, so old citations cannot silently move. Chunked summaries may repeat points and do not perform a second global synthesis. An explicitly selected Local source excerpts mode provides exact, labelled non-AI notes; local topic excerpts use keyword matching.
+Evidence quotes, speaker labels, and display timestamps always resolve from stored data. Generated quotations missing from their cited evidence are marked unsupported; claims citing unassigned/overlapping voices are marked ambiguous. Claims remain speaker assertions, not independently verified facts; a valid reference cannot prove semantic support. Review important claims against every passage. Corrections mark summaries stale; split segments receive new IDs, so old citations cannot silently move. Chunked summaries may repeat points and do not perform a second global synthesis. An explicitly selected Local source excerpts mode provides exact, labelled non-AI notes; local topic excerpts use keyword matching.
 
 ## Privacy, recovery and limitations
 
@@ -47,7 +47,7 @@ Originals remain read-only. App data/autosaves, local normalized audio, diagnost
 
 Legacy AssemblyAI/OpenAI providers are opt-in Settings choices with explicit upload consent, session/environment keys, provider costs/retention, and no automatic activation. Local mode never contacts saved cloud job IDs. Cloud cancellation cannot undo already submitted provider work. Credentials from the earlier environment configuration are not required for offline use; remove obsolete cloud requirements in environment settings if unused.
 
-This release is not production-certified. Linux unit/integration and real ONNX diarization are validated; full Whisper/GGUF inference is blocked here by model-host access, and the host has neither RTX/CUDA nor Apple Silicon/Metal. Target-platform performance, acoustic accuracy, native signing/notarization, clean-machine compatibility, and complex-script PDF fonts still require validation. Refer to [executed checks and limitations](docs/validation.md).
+This release is not production-certified. Linux unit/integration, native CPU engines, real Whisper/ONNX/GGUF inference, and the rebuilt Linux desktop package are validated. This host has neither RTX/CUDA nor Apple Silicon/Metal. Target-platform performance, acoustic accuracy, native signing/notarization, clean-machine compatibility, and complex-script PDF fonts still require validation. Refer to [executed checks and limitations](docs/validation.md).
 
 ## Development, packaging, and CI
 
