@@ -46,3 +46,11 @@ Recreate the distribution archive after stapling. Configure the notary profile s
 The cloud build produces `dist/PodcastSpeakerStudio-Linux-x86_64.zip`. This validates the PyInstaller pipeline for Linux only. A headless launch can validate initialization and decoding with `QT_QPA_PLATFORM=offscreen QT_AUDIO_BACKEND=pulseaudio`; Linux desktops need their usual display/audio libraries. Linux executable compatibility depends on the build host's glibc and system libraries.
 
 Before distributing, review dependency licenses, codec licensing, and Qt LGPL obligations for your distribution. This project keeps PyInstaller's Qt libraries as dynamically linked files in an onedir bundle. Include corresponding license notices/source offers as required; a zipped development build is not a completed legal distribution review.
+
+## Version 0.2 offline distributions
+
+The package now includes NumPy, sherpa-onnx and its ONNX runtime libraries. Optional `--edge-bundle PATH` embeds a verified complete directory with an `edge-config.json`, native whisper-cli/llama-server/FFmpeg binaries, models, runtime dependencies, and licenses. Without this flag the artifact is app-only and needs an external prepared bundle selected in Settings. Large weights are intentionally absent from source/CI app archives; see edge.md for the full transfer workflow.
+
+CI builds Windows CPU engine artifacts and macOS 26 arm64 Metal artifacts. It does not produce RTX CUDA binaries on a CPU Windows runner; build those with a native CUDA Toolkit/Visual Studio installation and benchmark on the actual card. Hosted Mac Metal compilation is not evidence of M1-specific throughput. Neither target release is claimed signed/notarized or tested until the corresponding native job and acceptance checks succeed.
+
+Sign embedded native executables/libraries before hashing them into the edge manifest, then sign the final app bundle after all resources/manifests are fixed. Regenerate registered hashes if signing changes binaries. Transfer all runtime libraries; verify an offline clean-machine import→transcribe→correct→summary→export workflow before distribution.

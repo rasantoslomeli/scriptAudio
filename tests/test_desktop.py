@@ -48,6 +48,8 @@ def test_failed_worker_restores_persisted_job(qtbot, project, tmp_path, monkeypa
     window = Studio(tmp_path)
     qtbot.addWidget(window)
     window.add_project(project)
+    window.settings.setValue('transcription_backend','AssemblyAI (cloud)')
+    window.settings.setValue('summary_backend','Local source excerpts (not AI)')
     window.assembly_key = 'fixture'
     monkeypatch.setattr(window, 'cloud_consent', lambda **kwargs: True)
     warnings = []
@@ -84,6 +86,8 @@ def test_import_to_transcript_correction_summary_and_export(qtbot, tmp_path, mon
     qtbot.waitUntil(lambda: window.task is None, timeout=10000)
     assert window.project_choice.count() == 2
     assert len(list((window.data / 'projects').glob('*.json'))) == 2
+    window.settings.setValue('transcription_backend','AssemblyAI (cloud)')
+    window.settings.setValue('summary_backend','Local source excerpts (not AI)')
     window.assembly_key = 'fixture'
     window.summary_key = ''
     def transcribed(self, snapshot, options, checkpoint, progress):

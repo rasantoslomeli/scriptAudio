@@ -129,7 +129,7 @@ def apply_transcript(project: Project, result: dict) -> None:
                  for w in u.get("words", [])]
         segments.append(Segment(uid("seg"), speaker_id, start, end, u["text"], u["text"], words,
                                 u.get("confidence"), u.get("speaker_confidence"),
-                                bool(u.get("overlap", False)), flags=["Unassigned voice"] if identity == "unknown" else []))
+                                bool(u.get("overlap", False)), flags=list(u.get("review_flags", [])) + (["Unassigned voice"] if identity == "unknown" else [])))
     segments.sort(key=lambda s: s.start)
     # Provider silence gaps are not proof of omitted speech; flag for listening rather than inventing text.
     for previous, current in zip(segments, segments[1:]):

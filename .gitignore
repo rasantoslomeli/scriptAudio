@@ -7,3 +7,7 @@ dist/
 *.spec
 *.log
 .env
+edge-bundle/
+.native-engines/
+edge-cache/
+*.benchmark.json

@@ -1,15 +1,21 @@
-name: Desktop tests and native packages
+name: Offline desktop tests and native packages
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ['v*']
+    paths: ['podcast_studio/**', 'scripts/**', 'tests/**', 'pyproject.toml', 'uv.lock', '.github/workflows/desktop-builds.yml']
   pull_request:
 jobs:
   package:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, macos-26]
+        include:
+          - os: windows-2025
+            profile: cpu
+          - os: macos-26
+            profile: apple-silicon
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -24,10 +30,19 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: uv run --frozen --extra dev pytest -q
-      - name: Package for the native platform
+      - name: Compile pinned native engines
+        run: uv run --frozen --extra dev python scripts/build_engines.py --profile ${{ matrix.profile }} --directory .native-engines --jobs 3
+      - name: Package native application
         run: uv run --frozen --extra dev python scripts/package.py
       - uses: actions/upload-artifact@v4
         with:
           name: PodcastSpeakerStudio-${{ matrix.os }}
           path: dist/*.zip
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Offline-engines-${{ matrix.os }}-${{ matrix.profile }}
+          path: |
+            .native-engines/whisper.cpp/build/bin/
+            .native-engines/llama.cpp/build/bin/
           if-no-files-found: error

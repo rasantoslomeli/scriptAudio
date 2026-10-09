@@ -17,6 +17,8 @@ from .model import Project, Speaker, Job, Bookmark, uid, stamp
 from .media import import_audio, SUPPORTED
 from .providers import AssemblyAI, Cancelled, apply_transcript
 from .summaries import MODES, summarize, evidence
+from .edge import EdgeConfig, OfflineTranscriber
+from .local_llm import local_summaries
 from .exports import FORMATS, SCOPES, EXTENSIONS, export, report
 
 
@@ -40,18 +42,49 @@ class Task(QThread):
             self.failed.emit(str(error) if not isinstance(error, OSError) else "Cannot read or write a required local file.")
 
 
+def default_edge_config():
+    if os.environ.get("PSS_EDGE_CONFIG"):
+        return os.environ["PSS_EDGE_CONFIG"]
+    root = Path(getattr(sys,"_MEIPASS",Path(__file__).resolve().parents[1]))
+    bundled = root / "edge-bundle" / "edge-config.json"
+    return str(bundled) if bundled.is_file() else ""
+
+
 class SettingsDialog(QDialog):
     def __init__(self, settings, assembly_key, summary_key, parent):
         super().__init__(parent)
         self.setWindowTitle("Processing settings")
         self.resize(550, 380)
         layout = QVBoxLayout(self)
-        notice = QLabel("Cloud transcription uploads the original recording to AssemblyAI.\n"
+        notice = QLabel("Offline edge mode uses only your installed engines/models. Missing assets fail visibly; no cloud fallback.\n"
+                        "Cloud transcription uploads the original recording to AssemblyAI.\n"
                         "AI summaries send transcript passages to OpenAI. Provider charges and retention policies apply.\n"
                         "Keys entered here remain in memory for this session and are never saved in projects.")
         notice.setWordWrap(True)
         layout.addWidget(notice)
         form = QFormLayout()
+        self.backend = QComboBox()
+        self.backend.addItems(["Offline edge", "AssemblyAI (cloud)"])
+        self.backend.setCurrentText(settings.value("transcription_backend", "Offline edge"))
+        self.summary_backend = QComboBox()
+        self.summary_backend.addItems(["Offline AI (GGUF)", "Local source excerpts (not AI)", "OpenAI (cloud)"])
+        self.summary_backend.setCurrentText(settings.value("summary_backend", "Offline AI (GGUF)"))
+        self.edge_config = QLineEdit(settings.value("edge_config", default_edge_config()))
+        bundle_row = QWidget()
+        bundle_layout = QHBoxLayout(bundle_row)
+        bundle_layout.setContentsMargins(0,0,0,0)
+        bundle_layout.addWidget(self.edge_config)
+        browse = QPushButton("Browse…")
+        def select_bundle():
+            path, _ = QFileDialog.getOpenFileName(self, "Offline engine manifest", "", "Edge bundle (*.json)")
+            if path:
+                self.edge_config.setText(path)
+        browse.clicked.connect(select_bundle)
+        bundle_layout.addWidget(browse)
+        form.addRow("Transcription provider", self.backend)
+        form.addRow("Summary provider", self.summary_backend)
+        form.addRow("Offline bundle manifest", bundle_row)
+        form.addRow(QLabel("Bundle profiles: RTX 3080/CUDA · Apple Silicon/Metal · CPU. See docs/edge.md."))
         self.assembly = QLineEdit(assembly_key)
         self.summary = QLineEdit(summary_key)
         for field in (self.assembly, self.summary):
@@ -60,7 +93,7 @@ class SettingsDialog(QDialog):
         self.language = QLineEdit(settings.value("language", ""))
         self.language.setPlaceholderText("Blank = automatic; otherwise en, es, …")
         self.speakers = QComboBox()
-        self.speakers.addItems(["Automatic"] + [str(i) for i in range(2, 21)])
+        self.speakers.addItems(["Automatic"] + [str(i) for i in range(1, 21)])
         self.speakers.setCurrentText(settings.value("speaker_count", "Automatic"))
         self.default_mode = QComboBox()
         self.default_mode.addItems(["Full Transcript Only", "Transcript + entire podcast AI summary"])
@@ -246,7 +279,7 @@ class Studio(QMainWindow):
         self.summary_button = self.button("Generate summary", self.generate_summary, summary_controls)
         summary_layout.addLayout(summary_controls)
         note = QLabel("AI claims describe speaker assertions, not verified facts. Inspect every supporting passage.\n"
-                      "Without an OpenAI key, this produces explicitly labelled local source excerpts, not an AI summary.")
+                      "Offline AI uses a local GGUF model. Select local source excerpts explicitly for non-AI notes.")
         note.setWordWrap(True)
         summary_layout.addWidget(note)
         self.summary_view = QTextBrowser()
@@ -708,7 +741,9 @@ class Studio(QMainWindow):
         dialog = SettingsDialog(self.settings, self.assembly_key, self.summary_key, self)
         if dialog.exec():
             self.assembly_key, self.summary_key = dialog.assembly.text().strip(), dialog.summary.text().strip()
-            for name, value in [("summary_model", dialog.model.text().strip() or "gpt-4o-mini"),
+            for name, value in [("transcription_backend", dialog.backend.currentText()),
+                                ("summary_backend", dialog.summary_backend.currentText()), ("edge_config", dialog.edge_config.text().strip()),
+                                ("summary_model", dialog.model.text().strip() or "gpt-4o-mini"),
                                 ("language", dialog.language.text().strip()), ("speaker_count", dialog.speakers.currentText()),
                                 ("processing_mode", dialog.default_mode.currentText())]:
                 self.settings.setValue(name, value)
@@ -732,14 +767,23 @@ class Studio(QMainWindow):
     def begin_processing(self, identities):
         if not identities:
             return
-        if not self.assembly_key:
-            self.configure()
+        backend = self.settings.value("transcription_backend", "Offline edge")
+        edge_config = self.settings.value("edge_config", default_edge_config())
+        if backend == "AssemblyAI (cloud)":
             if not self.assembly_key:
+                self.configure()
+                return  # Re-run after any provider change to capture fresh consent/options.
+            if not self.cloud_consent():
                 return
-        if not self.cloud_consent():
-            return
+        else:
+            try:
+                EdgeConfig.load(edge_config)
+            except (ValueError,TypeError,OSError):
+                self.fail("Select an installed offline edge-config.json in Settings. No recording has been uploaded. See docs/edge.md.")
+                return
         automatic_summary = self.settings.value("processing_mode", "Full Transcript Only") != "Full Transcript Only"
-        if automatic_summary and self.summary_key and not self.cloud_consent(summary=True):
+        summary_options = self.summary_options()
+        if automatic_summary and summary_options[0] == "OpenAI (cloud)" and not self.cloud_consent(summary=True):
             automatic_summary = False
         # Existing transcripts require a deliberate replacement decision.
         for identity in identities:
@@ -750,7 +794,7 @@ class Studio(QMainWindow):
                     return
         for identity in identities:
             job = self.projects[identity].job
-            if job and not job.remote_id and job.submitted_options:
+            if backend == "AssemblyAI (cloud)" and job and job.submitted_options.get("provider") != "offline" and not job.remote_id and job.submitted_options:
                 remote_id, accepted = QInputDialog.getText(self, "Recover interrupted submission",
                     "Submission may have reached AssemblyAI. Paste the transcript ID from its dashboard to resume.\n"
                     "Leave blank to submit a new potentially chargeable job; Cancel to stop.")
@@ -758,16 +802,16 @@ class Studio(QMainWindow):
                     return
                 if remote_id.strip():
                     job.remote_id = remote_id.strip()
-        self.queue = [(identity, automatic_summary) for identity in identities]
+        self.queue = [(identity, automatic_summary, backend, edge_config, summary_options) for identity in identities]
         self.start_next()
 
     def start_next(self):
         if not self.queue or self.busy():
             return
-        identity, automatic_summary = self.queue.pop(0)
+        identity, automatic_summary, backend, edge_config, summary_options = self.queue.pop(0)
         self.project_choice.setCurrentIndex(self.project_choice.findData(identity))
         project = copy.deepcopy(self.projects[identity])
-        if project.segments:
+        if project.segments or backend == "AssemblyAI (cloud)" and project.job and project.job.submitted_options.get("provider") == "offline":
             project.job = Job(uid("job"))
         options = {}
         language = self.settings.value("language", "")
@@ -779,17 +823,19 @@ class Studio(QMainWindow):
         if count != "Automatic":
             options["speakers_expected"] = int(count)
         key = self.assembly_key
-        summary_key, summary_model = self.summary_key, self.settings.value("summary_model", "gpt-4o-mini")
+        cache_root = self.data / "edge-cache"
         path = self.autosave_path(project)
         self.job_project_id = project.id
         def operation(progress, cancel):
             try:
-                result = AssemblyAI(key, cancel).transcribe(project, options, lambda: project.save(path), progress)
+                provider = (OfflineTranscriber(edge_config, cache_root, cancel) if backend == "Offline edge"
+                            else AssemblyAI(key, cancel))
+                result = provider.transcribe(project, options, lambda: project.save(path), progress)
                 apply_transcript(project, result)
                 project.save(path)
                 if automatic_summary:
                     try:
-                        project.summaries.extend(summarize(project, MODES[0], [], "", summary_key, summary_model, cancel, progress))
+                        project.summaries.extend(self.compute_summaries(project, MODES[0], [], "", summary_options, cancel, progress))
                     except Cancelled:
                         project.save(path)
                         raise
@@ -800,7 +846,7 @@ class Studio(QMainWindow):
             except Exception as error:
                 if project.job:
                     project.job.status = "cancelled" if isinstance(error, Cancelled) else "interrupted"
-                    project.job.error = "Cancelled locally; cloud work may continue" if isinstance(error, Cancelled) else "Processing interrupted; retry to resume"
+                    project.job.error = ("Cancelled; completed local stages retained" if backend == "Offline edge" else "Cancelled locally; cloud work may continue") if isinstance(error, Cancelled) else "Processing interrupted; retry to resume"
                 project.save(path)
                 raise
         self.run_task(operation, self.processing_completed)
@@ -843,7 +889,7 @@ class Studio(QMainWindow):
 
     def task_cancelled(self):
         self.queue.clear()
-        self.progress_label.setText("Cancelled locally; cloud work may continue and incur charges")
+        self.progress_label.setText("Cancelled; local checkpoints retained. Already submitted cloud jobs may still run.")
 
     def task_finished(self):
         old = self.task
@@ -862,7 +908,7 @@ class Studio(QMainWindow):
                 except (OSError, ValueError, TypeError, KeyError):
                     self.fail("Could not reload the job checkpoint; use Recover autosave.")
             self.job_project_id = None
-        if self.progress_label.text().startswith(("AssemblyAI:", "Summarizing", "Inspecting")):
+        if self.progress_label.text().startswith(("AssemblyAI:", "Summarizing", "Inspecting", "Offline")):
             self.progress_label.setText("Completed and saved")
         old.deleteLater()
         if self.queue:
@@ -872,7 +918,21 @@ class Studio(QMainWindow):
         self.queue.clear()
         if self.task:
             self.task.cancel.set()
-            self.progress_label.setText("Cancelling safely; waiting for any in-flight request…")
+            self.progress_label.setText("Cancelling safely; stopping local engines or the in-flight cloud request…")
+
+    def summary_options(self):
+        return (self.settings.value("summary_backend", "Offline AI (GGUF)"),
+                self.settings.value("edge_config", default_edge_config()),
+                self.summary_key, self.settings.value("summary_model", "gpt-4o-mini"))
+
+    @staticmethod
+    def compute_summaries(project, mode, selected, topic, options, cancel, progress):
+        backend, config, key, model = options
+        if backend == "Offline AI (GGUF)":
+            return local_summaries(project,mode,selected,topic,config,cancel,progress)
+        if backend == "OpenAI (cloud)" and not key:
+            raise ValueError("The explicitly selected cloud summary provider needs an API key; choose offline AI or local source excerpts instead.")
+        return summarize(project,mode,selected,topic,key if backend == "OpenAI (cloud)" else "",model,cancel,progress)
 
     def generate_summary(self):
         if not self.project or not self.project.segments or self.busy():
@@ -901,12 +961,12 @@ class Studio(QMainWindow):
             selected = [sid for box, sid in choices if box.isChecked()]
             if not selected:
                 return
-        if self.summary_key and not self.cloud_consent(summary=True):
+        options = self.summary_options()
+        if options[0] == "OpenAI (cloud)" and not self.cloud_consent(summary=True):
             return
         snapshot = copy.deepcopy(self.project)
-        key, model = self.summary_key, self.settings.value("summary_model", "gpt-4o-mini")
         def operation(progress, cancel):
-            return snapshot.id, summarize(snapshot, mode, selected, topic, key, model, cancel, progress)
+            return snapshot.id, self.compute_summaries(snapshot, mode, selected, topic, options, cancel, progress)
         def completed(result):
             identity, summaries = result
             self.projects[identity].summaries.extend(summaries)
@@ -1011,6 +1071,9 @@ class Studio(QMainWindow):
 
 
 def main():
+    if "--diarize-worker" in sys.argv:
+        from .edge_worker import main as diarize
+        return diarize(sys.argv[sys.argv.index("--diarize-worker")+1:])
     app = QApplication(sys.argv)
     app.setApplicationName("Podcast Speaker Studio")
     app.setOrganizationName("PodcastSpeakerStudio")
